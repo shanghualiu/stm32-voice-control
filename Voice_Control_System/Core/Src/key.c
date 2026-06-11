@@ -48,15 +48,7 @@ static const Key_Pin_t key_pins[KEY_COUNT] = {
     {KEY6_PORT, KEY6_PIN},   /* [5] KEY6: PA4 → 全部全关 (已修正引脚) */
 };
 
-/* ============================ 按键功能描述 (用于调试) ============================ */
-static const char *key_names[KEY_COUNT] = {
-    "KEY1:Light Toggle",
-    "KEY2:Fan Toggle",
-    "KEY3:Socket Toggle",
-    "KEY4:Spare Toggle",
-    "KEY5:All ON",
-    "KEY6:All OFF"
-};
+
 
 /* ============================ 外部变量引用 ============================ */
 extern uint8_t  key_buf[KEY_COUNT];
