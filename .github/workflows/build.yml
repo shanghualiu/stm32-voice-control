@@ -40,6 +40,7 @@ jobs:
           cp -r /tmp/hal/Inc/* Drivers/STM32F1xx_HAL_Driver/
           cp /tmp/hal/Src/*.c Drivers/STM32F1xx_HAL_Driver/
           rm -rf /tmp/hal
+          rm -f Drivers/STM32F1xx_HAL_Driver/*template*.c
 
           echo "=== Downloaded: CMSIS=$(ls Drivers/CMSIS/*.h 2>/dev/null | wc -l) files, HAL=$(ls Drivers/STM32F1xx_HAL_Driver/*.h 2>/dev/null | wc -l) headers, $(ls Drivers/STM32F1xx_HAL_Driver/*.c 2>/dev/null | wc -l) sources ==="
 
