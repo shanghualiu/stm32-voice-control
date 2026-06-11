@@ -23,28 +23,25 @@ jobs:
           cd Voice_Control_System
           mkdir -p Drivers/CMSIS Drivers/STM32F1xx_HAL_Driver
 
-          echo "=== Cloning CMSIS Core ==="
-          git clone --depth 1 https://github.com/STMicroelectronics/cmsis_core.git /tmp/cmsis_core
-          cp /tmp/cmsis_core/Core/Include/*.h Drivers/CMSIS/
+          echo "=== Cloning CMSIS Core (ARM) ==="
+          git clone --depth 1 https://github.com/ARM-software/CMSIS_5.git /tmp/cmsis5
+          cp /tmp/cmsis5/CMSIS/Core/Include/*.h Drivers/CMSIS/
+          rm -rf /tmp/cmsis5
 
           echo "=== Cloning CMSIS Device F1 ==="
-          git clone --depth 1 https://github.com/STMicroelectronics/cmsis_device_f1.git /tmp/cmsis_device_f1
-          cp /tmp/cmsis_device_f1/Include/*.h Drivers/CMSIS/
-          cp /tmp/cmsis_device_f1/Source/Templates/system_stm32f1xx.c Drivers/CMSIS/
-          cp /tmp/cmsis_device_f1/Source/Templates/gcc/startup_stm32f103xb.s Drivers/CMSIS/
+          git clone --depth 1 https://github.com/STMicroelectronics/cmsis_device_f1.git /tmp/cmsis_dev
+          cp /tmp/cmsis_dev/Include/*.h Drivers/CMSIS/
+          cp /tmp/cmsis_dev/Source/Templates/system_stm32f1xx.c Drivers/CMSIS/
+          cp /tmp/cmsis_dev/Source/Templates/gcc/startup_stm32f103xb.s Drivers/CMSIS/
+          rm -rf /tmp/cmsis_dev
 
           echo "=== Cloning HAL Driver F1 ==="
-          git clone --depth 1 https://github.com/STMicroelectronics/stm32f1xx_hal_driver.git /tmp/hal_f1
-          cp -r /tmp/hal_f1/Inc/* Drivers/STM32F1xx_HAL_Driver/
-          cp /tmp/hal_f1/Src/*.c Drivers/STM32F1xx_HAL_Driver/
+          git clone --depth 1 https://github.com/STMicroelectronics/stm32f1xx_hal_driver.git /tmp/hal
+          cp -r /tmp/hal/Inc/* Drivers/STM32F1xx_HAL_Driver/
+          cp /tmp/hal/Src/*.c Drivers/STM32F1xx_HAL_Driver/
+          rm -rf /tmp/hal
 
-          echo "=== Cleanup ==="
-          rm -rf /tmp/cmsis_core /tmp/cmsis_device_f1 /tmp/hal_f1
-
-          echo "=== Files downloaded ==="
-          ls Drivers/CMSIS/*.h | wc -l
-          ls Drivers/STM32F1xx_HAL_Driver/*.h | wc -l
-          ls Drivers/STM32F1xx_HAL_Driver/*.c | wc -l
+          echo "=== Downloaded: CMSIS=$(ls Drivers/CMSIS/*.h 2>/dev/null | wc -l) files, HAL=$(ls Drivers/STM32F1xx_HAL_Driver/*.h 2>/dev/null | wc -l) headers, $(ls Drivers/STM32F1xx_HAL_Driver/*.c 2>/dev/null | wc -l) sources ==="
 
       - name: Compile firmware
         run: |
