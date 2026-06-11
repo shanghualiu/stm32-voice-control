@@ -1,57 +1,94 @@
 name: Build STM32 Firmware
+# 推送代码到 GitHub 后自动编译生成 hex 固件
 
-  on:
-    push:
-      branches: [main, master]
-    workflow_dispatch:
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:  # 允许手动触发编译
 
-  jobs:
-    build:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 检出仓库代码
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-        - name: Install ARM GCC Toolchain
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y gcc-arm-none-eabi
-            arm-none-eabi-gcc --version
+      # 2. 安装 ARM GCC 工具链
+      - name: Install ARM GCC Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
+          arm-none-eabi-gcc --version
 
-        - name: Download STM32F1 HAL Driver
-          run: |
-            mkdir -p Drivers/CMSIS Drivers/STM32F1xx_HAL_Driver
-            BASE_CORE="https://raw.githubusercontent.com/STMicroelectronics/cmsis_core/main/Core/Include"
-            for f in cmsis_compiler.h cmsis_gcc.h cmsis_version.h core_cm3.h mpu_armv7.h; do
-              curl -sL "${BASE_CORE}/${f}" -o "Drivers/CMSIS/${f}"
-            done
-            BASE_DEV="https://raw.githubusercontent.com/STMicroelectronics/cmsis_device_f1/master"
-            for f in stm32f103xb.h stm32f1xx.h system_stm32f1xx.h; do
-              curl -sL "${BASE_DEV}/Include/${f}" -o "Drivers/CMSIS/${f}"
-            done
-            curl -sL "${BASE_DEV}/Source/Templates/system_stm32f1xx.c" -o "Drivers/CMSIS/system_stm32f1xx.c"
-            curl -sL "${BASE_DEV}/Source/Templates/gcc/startup_stm32f103xb.s" -o "Drivers/CMSIS/startup_stm32f103xb.s"
-            BASE_HAL="https://raw.githubusercontent.com/STMicroelectronics/stm32f1xx_hal_driver/master"
-            for f in stm32f1xx_hal.h stm32f1xx_hal_def.h stm32f1xx_hal_cortex.h stm32f1xx_hal_gpio.h
-  stm32f1xx_hal_gpio_ex.h stm32f1xx_hal_rcc.h stm32f1xx_hal_rcc_ex.h stm32f1xx_hal_flash.h stm32f1xx_hal_flash_ex.h
-  stm32f1xx_hal_pwr.h stm32f1xx_hal_dma.h stm32f1xx_hal_i2c.h stm32f1xx_hal_tim.h stm32f1xx_hal_tim_ex.h
-  stm32f1xx_hal_uart.h; do
-              curl -sL "${BASE_HAL}/Inc/${f}" -o "Drivers/STM32F1xx_HAL_Driver/${f}"
-            done
-            for f in stm32f1xx_hal.c stm32f1xx_hal_cortex.c stm32f1xx_hal_gpio.c stm32f1xx_hal_rcc.c
-  stm32f1xx_hal_flash.c stm32f1xx_hal_pwr.c stm32f1xx_hal_dma.c stm32f1xx_hal_i2c.c stm32f1xx_hal_tim.c
-  stm32f1xx_hal_uart.c; do
-              curl -sL "${BASE_HAL}/Src/${f}" -o "Drivers/STM32F1xx_HAL_Driver/${f}"
-            done
+      # 3. 下载 STM32CubeF1 HAL 库
+      - name: Download STM32F1 HAL Driver
+        run: |
+          mkdir -p Drivers/CMSIS Drivers/STM32F1xx_HAL_Driver
+          # 下载 CMSIS Core (ARM)
+          curl -L https://raw.githubusercontent.com/STMicroelectronics/cmsis_core/main/Core/Include/cmsis_compiler.h \
+            -o Drivers/CMSIS/cmsis_compiler.h
+          curl -L https://raw.githubusercontent.com/STMicroelectronics/cmsis_core/main/Core/Include/cmsis_gcc.h \
+            -o Drivers/CMSIS/cmsis_gcc.h
+          curl -L https://raw.githubusercontent.com/STMicroelectronics/cmsis_core/main/Core/Include/cmsis_version.h \
+            -o Drivers/CMSIS/cmsis_version.h
+          curl -L https://raw.githubusercontent.com/STMicroelectronics/cmsis_core/main/Core/Include/core_cm3.h \
+            -o Drivers/CMSIS/core_cm3.h
+          curl -L https://raw.githubusercontent.com/STMicroelectronics/cmsis_core/main/Core/Include/mpu_armv7.h \
+            -o Drivers/CMSIS/mpu_armv7.h
 
-        - name: Compile firmware
-          run: make clean && make
+          # 下载 CMSIS Device (STM32F1)
+          curl -L https://raw.githubusercontent.com/STMicroelectronics/cmsis_device_f1/master/Include/stm32f103xb.h \
+            -o Drivers/CMSIS/stm32f103xb.h
+          curl -L https://raw.githubusercontent.com/STMicroelectronics/cmsis_device_f1/master/Include/stm32f1xx.h \
+            -o Drivers/CMSIS/stm32f1xx.h
+          curl -L https://raw.githubusercontent.com/STMicroelectronics/cmsis_device_f1/master/Include/system_stm32f1xx.h \
+            -o Drivers/CMSIS/system_stm32f1xx.h
+          curl -L https://raw.githubusercontent.com/STMicroelectronics/cmsis_device_f1/master/Source/Templates/system_stm32f1xx.c \
+            -o Drivers/CMSIS/system_stm32f1xx.c
+          curl -L https://raw.githubusercontent.com/STMicroelectronics/cmsis_device_f1/master/Source/Templates/gcc/startup_stm32f103xb.s \
+            -o Drivers/CMSIS/startup_stm32f103xb.s
 
-        - name: Upload firmware artifact
-          uses: actions/upload-artifact@v4
-          with:
-            name: Voice_Control_System_Firmware
-            path: |
-              build/Voice_Control_System.hex
-              build/Voice_Control_System.bin
-            retention-days: 90
+          # 下载 HAL Driver 头文件
+          HAL_INC="https://raw.githubusercontent.com/STMicroelectronics/stm32f1xx_hal_driver/master/Inc"
+          for f in stm32f1xx_hal.h stm32f1xx_hal_def.h stm32f1xx_hal_cortex.h \
+                   stm32f1xx_hal_gpio.h stm32f1xx_hal_gpio_ex.h stm32f1xx_hal_rcc.h \
+                   stm32f1xx_hal_rcc_ex.h stm32f1xx_hal_flash.h stm32f1xx_hal_flash_ex.h \
+                   stm32f1xx_hal_pwr.h stm32f1xx_hal_dma.h stm32f1xx_hal_i2c.h \
+                   stm32f1xx_hal_tim.h stm32f1xx_hal_tim_ex.h stm32f1xx_hal_uart.h \
+                   Legacy/stm32_hal_legacy.h; do
+            curl -L "${HAL_INC}/${f}" -o "Drivers/STM32F1xx_HAL_Driver/${f##*/}" 2>/dev/null || true
+          done
+
+          # 下载 HAL Driver 源文件
+          HAL_SRC="https://raw.githubusercontent.com/STMicroelectronics/stm32f1xx_hal_driver/master/Src"
+          for f in stm32f1xx_hal.c stm32f1xx_hal_cortex.c stm32f1xx_hal_gpio.c \
+                   stm32f1xx_hal_rcc.c stm32f1xx_hal_flash.c stm32f1xx_hal_pwr.c \
+                   stm32f1xx_hal_dma.c stm32f1xx_hal_i2c.c stm32f1xx_hal_tim.c \
+                   stm32f1xx_hal_uart.c; do
+            curl -L "${HAL_SRC}/${f}" -o "Drivers/STM32F1xx_HAL_Driver/${f}" 2>/dev/null || true
+          done
+
+      # 4. 编译项目
+      - name: Compile firmware
+        run: make clean && make
+
+      # 5. 上传 hex 固件作为构建产物
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Voice_Control_System_Firmware
+          path: |
+            build/Voice_Control_System.hex
+            build/Voice_Control_System.bin
+            build/Voice_Control_System.elf
+          retention-days: 90
+
+      # 6. 检查编译结果
+      - name: Verify output
+        run: |
+          ls -la build/
+          echo "=== Firmware size ==="
+          arm-none-eabi-size build/Voice_Control_System.elf
