@@ -73,7 +73,9 @@ jobs:
 
       # 4. 编译项目
       - name: Compile firmware
-        run: make clean && make
+          run: |
+            cd Voice_Control_System
+            make clean && make
 
       # 5. 上传 hex 固件作为构建产物
       - name: Upload firmware artifact
