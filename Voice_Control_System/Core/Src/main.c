@@ -45,13 +45,7 @@ uint8_t  uart_rx_buf[USART_RX_BUF_SIZE]  = {0};  /* UART接收缓冲区   */
 uint8_t  sys_state                = SYS_STATE_INIT; /* 系统状态       */
 volatile uint32_t g_ms_counter    = 0;    /* 全局毫秒计数器           */
 
-/* ============================ 静态函数声明 ============================ */
-static void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
-static void MX_I2C1_Init(void);
-static void MX_USART1_UART_Init(void);
-static void MX_TIM2_Init(void);
-static void Process_ASR_Result(uint8_t result_id);
+
 
 /* ============================ 主函数 ============================ */
 /**
