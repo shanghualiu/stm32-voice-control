@@ -48,7 +48,7 @@ static const Key_Pin_t key_pins[KEY_COUNT] = {
     {KEY6_PORT, KEY6_PIN},   /* [5] KEY6: PA4 → 全部全关 (已修正引脚) */
 };
 
-
+/* Note: key_names removed to avoid unused-variable warning */
 
 /* ============================ 外部变量引用 ============================ */
 extern uint8_t  key_buf[KEY_COUNT];
