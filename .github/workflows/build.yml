@@ -21,37 +21,30 @@ jobs:
       - name: Download STM32F1 HAL Driver
         run: |
           cd Voice_Control_System
-          mkdir -p Drivers/CMSIS
-          mkdir -p Drivers/STM32F1xx_HAL_Driver/Legacy
+          mkdir -p Drivers/CMSIS Drivers/STM32F1xx_HAL_Driver
 
-          F1="https://raw.githubusercontent.com/STMicroelectronics/STM32CubeF1/master"
+          echo "=== Cloning CMSIS Core ==="
+          git clone --depth 1 https://github.com/STMicroelectronics/cmsis_core.git /tmp/cmsis_core
+          cp /tmp/cmsis_core/Core/Include/*.h Drivers/CMSIS/
 
-          # CMSIS Core
-          for f in cmsis_compiler.h cmsis_gcc.h cmsis_version.h core_cm3.h mpu_armv7.h; do
-            curl -sL "${F1}/Drivers/CMSIS/Core/Include/${f}" -o "Drivers/CMSIS/${f}"
-          done
+          echo "=== Cloning CMSIS Device F1 ==="
+          git clone --depth 1 https://github.com/STMicroelectronics/cmsis_device_f1.git /tmp/cmsis_device_f1
+          cp /tmp/cmsis_device_f1/Include/*.h Drivers/CMSIS/
+          cp /tmp/cmsis_device_f1/Source/Templates/system_stm32f1xx.c Drivers/CMSIS/
+          cp /tmp/cmsis_device_f1/Source/Templates/gcc/startup_stm32f103xb.s Drivers/CMSIS/
 
-          # CMSIS Device headers
-          for f in stm32f103xb.h stm32f1xx.h system_stm32f1xx.h; do
-            curl -sL "${F1}/Drivers/CMSIS/Device/ST/STM32F1xx/Include/${f}" -o "Drivers/CMSIS/${f}"
-          done
+          echo "=== Cloning HAL Driver F1 ==="
+          git clone --depth 1 https://github.com/STMicroelectronics/stm32f1xx_hal_driver.git /tmp/hal_f1
+          cp -r /tmp/hal_f1/Inc/* Drivers/STM32F1xx_HAL_Driver/
+          cp /tmp/hal_f1/Src/*.c Drivers/STM32F1xx_HAL_Driver/
 
-          # CMSIS Device sources
-          curl -sL "${F1}/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/system_stm32f1xx.c" -o "Drivers/CMSIS/system_stm32f1xx.c"
-          curl -sL "${F1}/Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/gcc/startup_stm32f103xb.s" -o "Drivers/CMSIS/startup_stm32f103xb.s"
+          echo "=== Cleanup ==="
+          rm -rf /tmp/cmsis_core /tmp/cmsis_device_f1 /tmp/hal_f1
 
-          # HAL headers
-          HAL_INC="${F1}/Drivers/STM32F1xx_HAL_Driver/Inc"
-          for f in stm32f1xx_hal.h stm32f1xx_hal_def.h stm32f1xx_hal_cortex.h stm32f1xx_hal_gpio.h stm32f1xx_hal_gpio_ex.h stm32f1xx_hal_rcc.h stm32f1xx_hal_rcc_ex.h stm32f1xx_hal_flash.h stm32f1xx_hal_flash_ex.h stm32f1xx_hal_pwr.h stm32f1xx_hal_dma.h stm32f1xx_hal_i2c.h stm32f1xx_hal_tim.h stm32f1xx_hal_tim_ex.h stm32f1xx_hal_uart.h; do
-            curl -sL "${HAL_INC}/${f}" -o "Drivers/STM32F1xx_HAL_Driver/${f}"
-          done
-          curl -sL "${HAL_INC}/Legacy/stm32_hal_legacy.h" -o "Drivers/STM32F1xx_HAL_Driver/Legacy/stm32_hal_legacy.h"
-
-          # HAL sources
-          HAL_SRC="${F1}/Drivers/STM32F1xx_HAL_Driver/Src"
-          for f in stm32f1xx_hal.c stm32f1xx_hal_cortex.c stm32f1xx_hal_gpio.c stm32f1xx_hal_rcc.c stm32f1xx_hal_flash.c stm32f1xx_hal_pwr.c stm32f1xx_hal_dma.c stm32f1xx_hal_i2c.c stm32f1xx_hal_tim.c stm32f1xx_hal_uart.c; do
-            curl -sL "${HAL_SRC}/${f}" -o "Drivers/STM32F1xx_HAL_Driver/${f}"
-          done
+          echo "=== Files downloaded ==="
+          ls Drivers/CMSIS/*.h | wc -l
+          ls Drivers/STM32F1xx_HAL_Driver/*.h | wc -l
+          ls Drivers/STM32F1xx_HAL_Driver/*.c | wc -l
 
       - name: Compile firmware
         run: |
