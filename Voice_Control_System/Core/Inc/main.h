@@ -106,8 +106,7 @@ void SystemClock_Config(void);             /* 系统时钟配置 (72MHz)     */
 void MX_GPIO_Init(void);                   /* GPIO 初始化              */
 void MX_I2C1_Init(void);                   /* I2C1 初始化 (OLED)       */
 void MX_USART1_UART_Init(void);            /* USART1 初始化 (LD3320)   */
-void MX_TIM2_Init(void);                   /* TIM2 初始化 (消抖定时器) */
-void MX_EXTI_Init(void);                   /* 外部中断初始化           */
+/* TIM2 初始化声明见 tim.h: TIM2_Init() */
 
 /* 应用函数 */
 void Process_ASR_Result(uint8_t result_id); /* 处理语音识别结果         */
