@@ -20,6 +20,7 @@ jobs:
 
       - name: Download STM32F1 HAL Driver
         run: |
+          cd Voice_Control_System
           mkdir -p Drivers/CMSIS Drivers/STM32F1xx_HAL_Driver
           BASE_CORE="https://raw.githubusercontent.com/STMicroelectronics/cmsis_core/main/Core/Include"
           for f in cmsis_compiler.h cmsis_gcc.h cmsis_version.h core_cm3.h mpu_armv7.h; do curl -sL "${BASE_CORE}/${f}" -o "Drivers/CMSIS/${f}"; done
