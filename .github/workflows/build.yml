@@ -1,59 +1,48 @@
 name: Build STM32 Firmware
 
-  on:
-    push:
-      branches: [main, master]
-    workflow_dispatch:
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
 
-  jobs:
-    build:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-        - name: Install ARM GCC Toolchain
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y gcc-arm-none-eabi
-            arm-none-eabi-gcc --version
+      - name: Install ARM GCC Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi
+          arm-none-eabi-gcc --version
 
-        - name: Download STM32F1 HAL Driver
-          run: |
-            mkdir -p Drivers/CMSIS Drivers/STM32F1xx_HAL_Driver
-            BASE_CORE="https://raw.githubusercontent.com/STMicroelectronics/cmsis_core/main/Core/Include"
-            for f in cmsis_compiler.h cmsis_gcc.h cmsis_version.h core_cm3.h mpu_armv7.h; do
-              curl -sL "${BASE_CORE}/${f}" -o "Drivers/CMSIS/${f}"
-            done
-            BASE_DEV="https://raw.githubusercontent.com/STMicroelectronics/cmsis_device_f1/master"
-            for f in stm32f103xb.h stm32f1xx.h system_stm32f1xx.h; do
-              curl -sL "${BASE_DEV}/Include/${f}" -o "Drivers/CMSIS/${f}"
-            done
-            curl -sL "${BASE_DEV}/Source/Templates/system_stm32f1xx.c" -o "Drivers/CMSIS/system_stm32f1xx.c"
-            curl -sL "${BASE_DEV}/Source/Templates/gcc/startup_stm32f103xb.s" -o "Drivers/CMSIS/startup_stm32f103xb.s"
-            BASE_HAL="https://raw.githubusercontent.com/STMicroelectronics/stm32f1xx_hal_driver/master"
-            for f in stm32f1xx_hal.h stm32f1xx_hal_def.h stm32f1xx_hal_cortex.h stm32f1xx_hal_gpio.h
-  stm32f1xx_hal_gpio_ex.h stm32f1xx_hal_rcc.h stm32f1xx_hal_rcc_ex.h stm32f1xx_hal_flash.h stm32f1xx_hal_flash_ex.h
-  stm32f1xx_hal_pwr.h stm32f1xx_hal_dma.h stm32f1xx_hal_i2c.h stm32f1xx_hal_tim.h stm32f1xx_hal_tim_ex.h
-  stm32f1xx_hal_uart.h; do
-              curl -sL "${BASE_HAL}/Inc/${f}" -o "Drivers/STM32F1xx_HAL_Driver/${f}"
-            done
-            for f in stm32f1xx_hal.c stm32f1xx_hal_cortex.c stm32f1xx_hal_gpio.c stm32f1xx_hal_rcc.c
-  stm32f1xx_hal_flash.c stm32f1xx_hal_pwr.c stm32f1xx_hal_dma.c stm32f1xx_hal_i2c.c stm32f1xx_hal_tim.c
-  stm32f1xx_hal_uart.c; do
-              curl -sL "${BASE_HAL}/Src/${f}" -o "Drivers/STM32F1xx_HAL_Driver/${f}"
-            done
+      - name: Download STM32F1 HAL Driver
+        run: |
+          mkdir -p Drivers/CMSIS Drivers/STM32F1xx_HAL_Driver
+          BASE_CORE="https://raw.githubusercontent.com/STMicroelectronics/cmsis_core/main/Core/Include"
+          for f in cmsis_compiler.h cmsis_gcc.h cmsis_version.h core_cm3.h mpu_armv7.h; do curl -sL "${BASE_CORE}/${f}" -o "Drivers/CMSIS/${f}"; done
+          BASE_DEV="https://raw.githubusercontent.com/STMicroelectronics/cmsis_device_f1/master"
+          for f in stm32f103xb.h stm32f1xx.h system_stm32f1xx.h; do curl -sL "${BASE_DEV}/Include/${f}" -o "Drivers/CMSIS/${f}"; done
+          curl -sL "${BASE_DEV}/Source/Templates/system_stm32f1xx.c" -o "Drivers/CMSIS/system_stm32f1xx.c"
+          curl -sL "${BASE_DEV}/Source/Templates/gcc/startup_stm32f103xb.s" -o "Drivers/CMSIS/startup_stm32f103xb.s"
+          BASE_HAL="https://raw.githubusercontent.com/STMicroelectronics/stm32f1xx_hal_driver/master"
+          HAL_FILES="stm32f1xx_hal.h stm32f1xx_hal_def.h stm32f1xx_hal_cortex.h stm32f1xx_hal_gpio.h stm32f1xx_hal_gpio_ex.h stm32f1xx_hal_rcc.h stm32f1xx_hal_rcc_ex.h stm32f1xx_hal_flash.h stm32f1xx_hal_flash_ex.h stm32f1xx_hal_pwr.h stm32f1xx_hal_dma.h stm32f1xx_hal_i2c.h stm32f1xx_hal_tim.h stm32f1xx_hal_tim_ex.h stm32f1xx_hal_uart.h"
+          for f in ${HAL_FILES}; do curl -sL "${BASE_HAL}/Inc/${f}" -o "Drivers/STM32F1xx_HAL_Driver/${f}"; done
+          HAL_SRC="stm32f1xx_hal.c stm32f1xx_hal_cortex.c stm32f1xx_hal_gpio.c stm32f1xx_hal_rcc.c stm32f1xx_hal_flash.c stm32f1xx_hal_pwr.c stm32f1xx_hal_dma.c stm32f1xx_hal_i2c.c stm32f1xx_hal_tim.c stm32f1xx_hal_uart.c"
+          for f in ${HAL_SRC}; do curl -sL "${BASE_HAL}/Src/${f}" -o "Drivers/STM32F1xx_HAL_Driver/${f}"; done
 
-        - name: Compile firmware
-          run: |
-            cd Voice_Control_System
-            make clean && make
+      - name: Compile firmware
+        run: |
+          cd Voice_Control_System
+          make clean && make
 
-        - name: Upload firmware artifact
-          uses: actions/upload-artifact@v4
-          with:
-            name: Voice_Control_System_Firmware
-            path: |
-              Voice_Control_System/build/Voice_Control_System.hex
-              Voice_Control_System/build/Voice_Control_System.bin
-            retention-days: 90
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Voice_Control_System_Firmware
+          path: |
+            Voice_Control_System/build/Voice_Control_System.hex
+            Voice_Control_System/build/Voice_Control_System.bin
+          retention-days: 90
