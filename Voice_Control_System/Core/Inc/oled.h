@@ -30,10 +30,14 @@ extern "C" {
 #define FONT_HEIGHT_8X16  16              /* 8x16 字体高度             */
 
 /* 屏幕行号 (基于 8x16 字体) */
-#define OLED_LINE_0       0               /* 第0行 Y=0                 */
-#define OLED_LINE_1       2               /* 第1行 Y=2 (页)            */
-#define OLED_LINE_2       4               /* 第2行 Y=4                 */
-#define OLED_LINE_3       6               /* 第3行 Y=6                 */
+#define OLED_LINE_0       0
+  #define OLED_LINE_1       2
+  #define OLED_LINE_2       4
+  #define OLED_LINE_3       6
+  #define OLED_LINE_4       4
+  #define OLED_LINE_5       5
+  #define OLED_LINE_6       6
+  #define OLED_LINE_7       7
 
 /* 最大显示字符串长度 */
 #define OLED_STR_MAX_LEN  21              /* 128/6 = 21 字符 (6x8字体) */
