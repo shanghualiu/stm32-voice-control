@@ -84,27 +84,7 @@ void MX_USART1_UART_Init(void)
  *         只是在真实方案中 ID 来自 LD3320 的 SPI 寄存器,
  *         仿真中来自 USART1 串口接收
  */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART1)
-    {
-        uint8_t asr_id = uart_rx_buf[0];   /* 读取接收到的识别 ID */
-
-        /* 验证 ID 范围 */
-        if (asr_id >= ASR_ID_MIN && asr_id <= ASR_ID_MAX)
-        {
-            Process_ASR_Result(asr_id);     /* 调用统一指令处理函数 */
-        }
-        else
-        {
-            strcpy(asr_result_str, "Unknown CMD!");
-        }
-
-        /* 清除缓冲区, 重新启动接收中断 (循环接收) */
-        uart_rx_buf[0] = 0x00;
-        HAL_UART_Receive_IT(&huart1, uart_rx_buf, USART_RX_BUF_SIZE);
-    }
-}
+/* HAL_UART_RxCpltCallback() defined in main.c */
 
 /**
  * @brief  通过 USART1 发送数据

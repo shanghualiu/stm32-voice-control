@@ -17,8 +17,7 @@
 #include "tim.h"
 #include "key.h"
 
-/* ============================ 全局变量 ============================ */
-volatile uint32_t g_ms_counter = 0;  /* 全局毫秒计数器 (10ms 分辨率) */
+/* g_ms_counter defined in main.c */
 
 /* ============================ 函数实现 ============================ */
 
@@ -67,21 +66,7 @@ void TIM2_Init(void)
     HAL_TIM_Base_Start_IT(&htim2);
 }
 
-/**
- * @brief  TIM2 周期中断回调
- * @param  htim 定时器句柄指针
- * @note   每 10ms 由硬件中断触发:
- *         1. g_ms_counter += 10 (累加 10ms)
- *         2. 调用 Key_Scan() 执行按键扫描消抖
- */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-    if (htim->Instance == TIM2)
-    {
-        g_ms_counter += 10;       /* 累加器 (每 10ms) */
-        Key_Scan();               /* 按键扫描与消抖   */
-    }
-}
+/* HAL_TIM_PeriodElapsedCallback() defined in main.c */
 
 /**
  * @brief  获取系统上电以来的毫秒计数
