@@ -45,8 +45,6 @@ uint8_t  uart_rx_buf[USART_RX_BUF_SIZE]  = {0};  /* UART接收缓冲区   */
 uint8_t  sys_state                = SYS_STATE_INIT; /* 系统状态       */
 volatile uint32_t g_ms_counter    = 0;    /* 全局毫秒计数器           */
 
-
-
 /* ============================ 主函数 ============================ */
 /**
  * @brief  系统主函数
@@ -65,7 +63,7 @@ int main(void)
     MX_GPIO_Init();              /* GPIO: 按键输入 + 继电器输出     */
     MX_I2C1_Init();              /* I2C1: OLED 显示通信             */
     MX_USART1_UART_Init();       /* USART1: 模拟 LD3320 语音识别    */
-    MX_TIM2_Init();              /* TIM2: 10ms 按键扫描消抖         */
+    TIM2_Init();                 /* TIM2: 10ms 按键扫描消抖         */
 
     /* ---- 第4步: 模块驱动初始化 ---- */
     Relay_Init();                /* 继电器 GPIO 初始化 (全部断开)    */
@@ -109,7 +107,7 @@ int main(void)
  *         APB1 = 36MHz, APB2 = 72MHz
  *         Flash 等待周期: 2 (72MHz 要求)
  */
-static void SystemClock_Config(void)
+void SystemClock_Config(void)
 {
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
@@ -147,7 +145,7 @@ static void SystemClock_Config(void)
  * @note   继电器输出: PB12~PB15 (推挽输出, 初始高电平=断开)
  *         按键输入:    PA0~PA3, PA4, PA8 (上拉输入)
  */
-static void MX_GPIO_Init(void)
+void MX_GPIO_Init(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct = {0};
 
@@ -183,7 +181,7 @@ static void MX_GPIO_Init(void)
  *         速率: 400kHz (Fast Mode)
  *         时钟源: APB1 = 36MHz
  */
-static void MX_I2C1_Init(void)
+void MX_I2C1_Init(void)
 {
     hi2c1.Instance             = I2C1;
     hi2c1.Init.ClockSpeed      = 400000;            /* 400kHz Fast Mode */
@@ -200,73 +198,8 @@ static void MX_I2C1_Init(void)
     }
 }
 
-/* ============================ USART1 初始化 ============================ */
-/**
- * @brief  初始化 USART1 外设 (模拟 LD3320 语音识别)
- * @note   引脚: TX=PA9, RX=PA10
- *         参数: 9600bps, 8-N-1
- *         使能接收中断 (RXNE), 启动首次中断接收
- */
-static void MX_USART1_UART_Init(void)
-{
-    huart1.Instance          = USART1;
-    huart1.Init.BaudRate     = 9600;
-    huart1.Init.WordLength   = UART_WORDLENGTH_8B;
-    huart1.Init.StopBits     = UART_STOPBITS_1;
-    huart1.Init.Parity       = UART_PARITY_NONE;
-    huart1.Init.Mode         = UART_MODE_TX_RX;       /* 全双工 */
-    huart1.Init.HwFlowCtl    = UART_HWCONTROL_NONE;   /* 无流控 */
-    huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-
-    if (HAL_UART_Init(&huart1) != HAL_OK)
-    {
-        System_Error_Handler();
-    }
-
-    /* 启动首次中断接收 (循环接收由回调重启) */
-    HAL_UART_Receive_IT(&huart1, uart_rx_buf, USART_RX_BUF_SIZE);
-}
-
-/* ============================ TIM2 初始化 ============================ */
-/**
- * @brief  初始化 TIM2 定时器 (按键消抖用)
- * @note   时钟源: APB1 定时器时钟 = 72MHz (注意: APB1=36MHz, 但定时器时钟×2)
- *         预分频: 7200-1 → 10kHz
- *         重装载: 100-1  → 10ms 中断周期
- */
-static void MX_TIM2_Init(void)
-{
-    TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-    TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-    htim2.Instance               = TIM2;
-    htim2.Init.Prescaler         = 7199;      /* 72MHz / 7200 = 10kHz */
-    htim2.Init.CounterMode       = TIM_COUNTERMODE_UP;
-    htim2.Init.Period            = 99;        /* 10kHz / 100 = 100Hz = 10ms */
-    htim2.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
-    htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-
-    if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
-    {
-        System_Error_Handler();
-    }
-
-    sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-    if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-    {
-        System_Error_Handler();
-    }
-
-    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-    sMasterConfig.MasterSlaveMode     = TIM_MASTERSLAVEMODE_DISABLE;
-    if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-    {
-        System_Error_Handler();
-    }
-
-    /* 启动定时器中断 */
-    HAL_TIM_Base_Start_IT(&htim2);
-}
+/* MX_USART1_UART_Init() defined in usart.c */
+/* MX_TIM2_Init() defined in tim.c as TIM2_Init() */
 
 /* ============================ 语音识别处理函数 ============================ */
 /**
@@ -281,7 +214,7 @@ static void MX_TIM2_Init(void)
  *         0x05→打开插座  0x06→关闭插座  0x07→打开备用  0x08→关闭备用
  *         0x09→全部打开  0x0A→全部关闭
  */
-static void Process_ASR_Result(uint8_t result_id)
+void Process_ASR_Result(uint8_t result_id)
 {
     switch (result_id)
     {
